@@ -399,11 +399,14 @@ class BasicTrainer(object):
                             local_eval_batch, self.config.loss, train=False)
 
                     for k, v in eval_metrics.items():
-                        all_eval_metrics[k].extend(v)
-                        # if type(v) is float:
-                        #     all_eval_metrics[k].append(v)
-                        # else:
-                        #     all_eval_metrics[k].extend(v)
+                        # DUET PATCH: on single GPU all_gather_if_needed passes scalars
+                        # through unchanged, so metric values arrive as floats —
+                        # upstream's own (commented-out) type guard restored.
+                        # See UPSTREAM.md.
+                        if isinstance(v, float):
+                            all_eval_metrics[k].append(v)
+                        else:
+                            all_eval_metrics[k].extend(v)
 
                 if self.config.sample_during_eval:
                     if self.config.n_eval_model_samples < self.config.eval_batch_size:
@@ -476,11 +479,11 @@ class BasicTrainer(object):
                 (loss / self.config.gradient_accumulation_steps).backward()
 
                 for k, v in metrics.items():
-                    batch_metrics[k].extend(v)
-                    # if type(v) is float:
-                    #     batch_metrics[k].append(v)
-                    # else:
-                    #     batch_metrics[k].extend(v)
+                    # DUET PATCH: single-GPU float metrics (same as eval site above).
+                    if isinstance(v, float):
+                        batch_metrics[k].append(v)
+                    else:
+                        batch_metrics[k].extend(v)
 
             grad_norm = self.clip_gradient()
             self.optimizer.step()
@@ -630,7 +633,9 @@ class FSDPTrainer(BasicTrainer):
         
         # raw save methods:
         if "is_lora" not in self.config or not self.config["is_lora"]:
-            save_policy = FullStateDictConfig(offload_to_cpu=True, rank0_only=True)
+            # DUET PATCH: torch 2.0.1 FSDP rejects offload_to_cpu=True under NO_SHARD
+            # (world_size=1); keep upstream behavior on multi-GPU. See UPSTREAM.md.
+            save_policy = FullStateDictConfig(offload_to_cpu=self.world_size > 1, rank0_only=True)
             with FSDP.state_dict_type(self.policy, StateDictType.FULL_STATE_DICT, state_dict_config=save_policy):
                 policy_state_dict = self.policy.state_dict()
 
@@ -641,7 +646,7 @@ class FSDPTrainer(BasicTrainer):
             dist.barrier()
             
             save_policy = FullOptimStateDictConfig(
-            offload_to_cpu=True, rank0_only=True)
+            offload_to_cpu=self.world_size > 1, rank0_only=True)  # DUET PATCH: NO_SHARD compat
             with FSDP.state_dict_type(self.policy, StateDictType.FULL_STATE_DICT, optim_state_dict_config=save_policy):
                 optimizer_state_dict = FSDP.optim_state_dict(
                     self.policy, self.optimizer)
@@ -658,7 +663,7 @@ class FSDPTrainer(BasicTrainer):
                     self.example_counter, scheduler_state_dict, metrics, 'scheduler.pt', output_dir)
             dist.barrier()
         elif self.config["is_lora"]: # LoRA Saving
-            save_policy = FullStateDictConfig(offload_to_cpu=True, rank0_only=True)
+            save_policy = FullStateDictConfig(offload_to_cpu=self.world_size > 1, rank0_only=True)  # DUET PATCH: NO_SHARD compat
             with FSDP.state_dict_type(self.policy, StateDictType.FULL_STATE_DICT, state_dict_config=save_policy):
                 policy_state_dict = []
 

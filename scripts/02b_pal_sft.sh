@@ -16,9 +16,11 @@
 #   scripts/02b_pal_sft.sh            # full run: their hyperparams (10 epochs)
 #   SMOKE=1 scripts/02b_pal_sft.sh    # 512 examples — end-to-end pipeline check
 #
-# OOM knobs (edit here, in this order of preference):
-#   batch_size=64 ... then batch_size=32 ... then activation_checkpointing=true
-#   (effective micro-batch = batch_size / gradient_accumulation_steps)
+# OOM knobs — their semantics: micro_batch = batch_size / (gradient_accumulation_steps * num_gpus),
+#   and EFFECTIVE batch per step = batch_size (GPU-count independent). So to keep
+#   their published effective batch of 128 on ONE gpu with a safe micro-batch of 4,
+#   use batch_size=128 + gradient_accumulation_steps=32. If still OOM:
+#   activation_checkpointing=true ... then halve max_length.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 REPO="$PWD"
@@ -26,6 +28,7 @@ PY="$REPO/.venv-pal/bin/python"
 UP="$REPO/src/duet/baselines/pal/original"
 DATA="$REPO/data/raw/pal_format"
 RUNS="$REPO/outputs/pal_runs"
+# (no PYTORCH_CUDA_ALLOC_CONF: torch 2.0.1 rejects the newer options)
 
 test -x "$PY" || { echo "missing .venv-pal — install with:" >&2; echo "  python3.10 -m venv .venv-pal && .venv-pal/bin/pip install -r src/duet/baselines/pal/original/requirements.txt" >&2; exit 1; }
 test -f "$DATA/train_origin.txt" || { echo "missing data: $DATA/train_origin.txt (see stage 00 / git history)" >&2; exit 1; }
@@ -33,16 +36,21 @@ mkdir -p "$RUNS"
 
 if [[ "${SMOKE:-0}" == "1" ]]; then
   EXP="pal-sft-gpt2-origin-SMOKE"
-  SCALE=(n_epochs=1 n_examples=512 batch_size=16 gradient_accumulation_steps=2 eval_batch_size=32 eval_every=64)
+  # micro = 8/2 -> 4->2 (fp32 logits at seq 512 need micro<=2 on 8GB), eff batch 8.
+  # eval_every=4096 skips mid-training evals (already proven at step-64 in a prior
+  # run; their eval pass is 975 batches and dominates smoke wall-time).
+  SCALE=(n_epochs=1 n_examples=128 batch_size=8 gradient_accumulation_steps=2 eval_batch_size=16 eval_every=4096 activation_checkpointing=true)
 else
   EXP="pal-sft-gpt2-origin-seed42"
-  SCALE=(n_epochs=10 batch_size=128 gradient_accumulation_steps=4 eval_batch_size=128)
+  # micro = 128/32 = 4 (OOM-safe with checkpointing), EFFECTIVE batch 128 = upstream's published value
+  SCALE=(n_epochs=10 batch_size=128 gradient_accumulation_steps=32 eval_batch_size=32 activation_checkpointing=true)
 fi
 
 echo "== PAL SFT: exp=$EXP =="
 cd "$UP"
 "$PY" train.py \
   model=gpt2-small model.name_or_path=gpt2 \
+  datasets=[persona_chat_origin] \
   loss=sft \
   exp_name="$EXP" \
   trainer=FSDPTrainer \

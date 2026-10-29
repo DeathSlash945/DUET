@@ -232,7 +232,7 @@ class PersonaChat(Dataset):
                  data_dir: str = "./data", **kwargs) -> None:
         super().__init__()
         
-        assert data_part in ["train", "valid#1", "valid#2", "test"], data_part
+        assert data_part in ["train", "valid", "valid#1", "valid#2", "test"], data_part  # DUET PATCH: upstream's list omits "valid", yet their own next branch (`if data_part in ["train", "valid"]`) and trainers.py's eval iterator (split='valid') both use it — upstream evidently ran the Chinese path, whose class has no such assert. See UPSTREAM.md.
         assert dataset_version in ["origin", "revised"], dataset_version
         
         if kwargs.get("is_llama3") is True:
