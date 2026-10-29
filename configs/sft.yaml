@@ -1,0 +1,29 @@
+# Stage 1: supervised fine-tuning on PERSONA-CHAT (both profiles retained)
+# Run: scripts/02_sft.sh
+# Owner: shared (Devanshu stands up wrappers in Phase 0)
+
+run_name: sft
+# POLICY MODEL DECISION (Phase 0): 1.5B-class instruction-tuned per SOP.
+# Default candidate; revisit against PAL-reproduction findings before freezing.
+base_model: Qwen/Qwen2.5-1.5B-Instruct
+
+data:
+  train_path: data/processed/train.jsonl      # schemas.py contract (project_plan.md §5)
+  eval_path: data/processed/valid.jsonl
+  both_profiles: true                          # Component C invariant — never drop partner
+  max_seq_len: 1024
+
+lora:
+  r: 16
+  alpha: 32
+  dropout: 0.05
+  target_modules: [q_proj, k_proj, v_proj, o_proj]
+
+train:
+  epochs: 3
+  per_device_batch_size: 2
+  grad_accum: 8
+  lr: 2.0e-4
+  bf16: true
+  gradient_checkpointing: true
+  seed: 42

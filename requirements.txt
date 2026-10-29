@@ -1,11 +1,29 @@
-ipykernel==6.23.1
-numpy==1.24.3
-tokenizers==0.13.3
-torch==2.0.1
-tqdm==4.65.0
-transformers==4.29.2
-datasets==2.12.0
-beautifulsoup4==4.12.2
-wandb==0.15.3
-hydra-core==1.3.2
-tensor-parallel==1.2.4
+# DUET dependencies (Python 3.10 recommended — see README)
+# Deliberately range-pinned: exact pins belong in reports/ once a run is frozen.
+
+# --- Core training stack (SFT + preference optimization via TRL/PEFT) ---
+torch>=2.3
+transformers>=4.46
+datasets>=3.0
+peft>=0.13
+trl>=0.12
+accelerate>=1.0
+huggingface_hub>=0.26
+
+# --- Data & utilities ---
+numpy
+pandas
+tqdm
+pyyaml
+
+# --- Evaluation (Sumagna) ---
+# NLI checkpoints load through transformers; no extra dep needed.
+# sentencepiece  # uncomment if the chosen policy tokenizer needs it
+
+# --- Optional ---
+# hydra-core       # only when running PAL's original code unmodified
+# transformerlens  # Component B alternative to direct forward hooks (Zala's call)
+# wandb            # optional experiment tracking (weekly notes go to reports/ regardless)
+
+# --- Dev ---
+pytest

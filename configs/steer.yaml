@@ -1,0 +1,29 @@
+# COMPONENT B: latent persona attribute steering (Zala)
+# Extract per-attribute directions (paired activations, mean difference per layer),
+# then sweep layer × magnitude at inference. GATE: single-attribute must work
+# BEFORE composition is attempted.
+# Run: scripts/05_extract_directions.sh && scripts/06_steer_eval.sh
+# Owner: Zala
+
+run_name: steer_sweep
+base_model: Qwen/Qwen2.5-1.5B-Instruct
+policy_ckpt: outputs/sft/LATEST                # steering applied to the SFT policy
+
+extract:
+  activations_path: data/attrs                 # data/attrs/{layer}/{attribute}.npz
+  pairs_per_attribute: 256                     # expressed vs matched-not-expressed contexts
+  normalization: mean_diff                     # mean(expressed) - mean(not expressed)
+
+sweep:
+  layers: [6, 10, 14, 18, 22]                  # TODO: extend after first pass
+  magnitudes: [0.5, 1.0, 1.5, 2.0, 3.0]
+  comparison: prompt_conditioning              # steering vs ordinary profile-in-prompt
+
+composition:
+  enabled: false                               # flip to true only after single-attribute gate passes
+  sizes: [2, 3]
+  conflicting_pair: null                       # TODO: pick deliberately conflicting attributes
+
+eval:
+  sensitivity_metric: logprob_delta            # true vs perturbed profile (Zala defines, Sumagna runs)
+  generations_out: outputs/steer/{layer}_{mag}/generations.jsonl

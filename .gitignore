@@ -1,3 +1,31 @@
-/.venv
-/__pycache__
-/parlai_data
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Data — never committed (regenerate via scripts/)
+data/*
+!data/.gitkeep
+parlai_data/
+
+# Model artifacts
+outputs/
+checkpoints/
+*.pt
+*.bin
+*.safetensors
+*.onnx
+
+# Experiment tracking & logs
+wandb/
+runs/
+*.log
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/

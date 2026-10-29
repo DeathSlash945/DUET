@@ -1,0 +1,40 @@
+# COMPONENT A: critic-guided preference optimization (Devanshu)
+# Reward = critic identification confidence instead of entailment.
+# GATE (Phase 1): critic must beat chance by a wide margin on held-out profiles
+# and resist copy probes BEFORE this config is allowed to run.
+# Run: scripts/03_dpo.sh --config configs/dpo_critic.yaml
+# Owner: Devanshu
+
+run_name: dpo_critic
+base_model: Qwen/Qwen2.5-1.5B-Instruct        # must match dpo_entailment.yaml
+init_from: outputs/sft/LATEST                  # same SFT checkpoint as entailment run
+
+signal:
+  type: identification
+  critic_ckpt: checkpoints/critic/LATEST        # from scripts/04_train_critic.sh
+  n_candidates: 5                              # 1 true + 3 distractors + no-match slot
+  score: p_true_profile                        # reward = P(critic identifies true profile)
+
+critic:
+  refresh_interval_steps: 500                  # fixed intervals, NEVER continuous (cost/stability)
+  negatives:
+    distractor_pool: 300
+    lexical_overlap: jaccard                   # hard negatives: highest word overlap
+    include_copy_probes: true                  # verbatim copies trained as negatives
+    include_generic: true                      # generic replies → no-match slot
+
+data:
+  train_path: data/processed/train.jsonl
+  eval_path: data/processed/valid.jsonl
+  candidates_path: data/critic/train.jsonl     # built by data/negatives.py
+
+train:
+  algo: dpo
+  beta: 0.1
+  epochs: 3
+  per_device_batch_size: 2
+  grad_accum: 8
+  lr: 1.0e-6
+  bf16: true
+  gradient_checkpointing: true
+  seed: 42                                     # matched with dpo_entailment.yaml

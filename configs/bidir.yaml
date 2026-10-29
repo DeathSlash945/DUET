@@ -1,0 +1,33 @@
+# COMPONENT C: bidirectional persona training (Devanshu; reassigned at Phase 3
+# start to whoever has capacity, per project_plan.md §6)
+# Train with BOTH profiles in context. Evaluated on partner-fact recall,
+# partner-contradiction rate, and partner-appropriate questions (Sumagna).
+# Run: scripts/03_dpo.sh --config configs/bidir.yaml  (or dedicated script once built)
+# Owner: Devanshu
+
+run_name: bidir
+base_model: Qwen/Qwen2.5-1.5B-Instruct
+init_from: outputs/sft/LATEST
+
+data:
+  train_path: data/processed/train.jsonl
+  eval_path: data/processed/valid.jsonl
+  both_profiles: true                          # the whole point — partner profile stays in context
+  profile_format: labeled                      # e.g. "You are:<self> Talking to:<partner>"
+  dataset_version: original                    # "revised" runs belong to Sumagna's robustness sweep
+
+train:
+  algo: dpo
+  signal: entailment                           # Component C is orthogonal to the reward-signal claim
+  beta: 0.1
+  epochs: 3
+  per_device_batch_size: 2
+  grad_accum: 8
+  lr: 1.0e-6
+  bf16: true
+  gradient_checkpointing: true
+  seed: 42
+
+eval:
+  generations_out: outputs/bidir/generations.jsonl
+  partner_suite: true                          # consumed by src/duet/eval/partner.py

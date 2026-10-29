@@ -1,0 +1,31 @@
+# BASELINE: entailment-signal preference optimization (PAL / PPT style)
+# This is the control DUET's critic must beat under MATCHED conditions
+# (same base model, data, budget — only the reward signal differs).
+# Run: scripts/03_dpo.sh --config configs/dpo_entailment.yaml
+# Owner: Devanshu (Phase 0 — reproduce PAL, implement PPT)
+
+run_name: dpo_entailment
+base_model: Qwen/Qwen2.5-1.5B-Instruct        # must match dpo_critic.yaml
+init_from: outputs/sft/LATEST                  # same SFT checkpoint as critic run
+
+signal:
+  type: entailment                             # reward = NLI P(profile | response)
+  nli_checkpoints:
+    - null                                     # TODO: checkpoint 1 (seed 42)
+    - null                                     # TODO: checkpoint 2 (seed 43) — selection/scoring separation
+  pair_source: pal                             # "pal" = select-then-generate, "ppt" = persona-swapped negatives
+
+data:
+  train_path: data/processed/train.jsonl
+  eval_path: data/processed/valid.jsonl
+
+train:
+  algo: dpo                                    # TRL DPOTrainer
+  beta: 0.1
+  epochs: 3
+  per_device_batch_size: 2
+  grad_accum: 8
+  lr: 1.0e-6
+  bf16: true
+  gradient_checkpointing: true
+  seed: 42                                     # matched with dpo_critic.yaml
