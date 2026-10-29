@@ -96,11 +96,27 @@ def main(config: DictConfig):
     policy = transformers.AutoModelForCausalLM.from_pretrained(
         config.model.name_or_path, cache_dir=get_local_dir(config.local_dirs), low_cpu_mem_usage=True, torch_dtype=policy_dtype, **model_kwargs,attn_implementation="flash_attention_2")
     if config.model.archive is not None:
-        print(
-            f'loading pre-trained lora weights')
-        policy = PeftModel.from_pretrained(policy, config.model.archive, is_trainable=True)
-        # policy.merge_and_unload()
-        print('loaded pre-trained weights')
+        # DUET PATCH #6: upstream assumed `archive` is always a LoRA adapter dir,
+        # but their own Step-1 (train.py) checkpoint contains only policy.pt
+        # (full weights) — the two halves of their published pipeline don't
+        # connect without this. Support both forms: adapter dir -> upstream
+        # behavior; full checkpoint -> load weights as base, then attach a fresh
+        # trainable adapter with upstream's exact else-branch hyperparameters.
+        archive = str(config.model.archive)
+        if os.path.exists(os.path.join(archive, "adapter_config.json")):
+            print(f'loading pre-trained lora weights from {archive}')
+            policy = PeftModel.from_pretrained(policy, archive, is_trainable=True)
+            print('loaded pre-trained weights')
+        else:
+            print(f'loading FULL-MODEL weights from {archive} (DUET patch #6)')
+            sd = torch.load(os.path.join(archive, "policy.pt"), map_location="cpu")
+            policy.load_state_dict(sd["state"] if isinstance(sd, dict) and "state" in sd else sd)
+            policy = get_peft_model(policy, LoraConfig(
+                r=16,
+                lora_alpha=32,
+                init_lora_weights="gaussian"
+            ), autocast_adapter_dtype=False)
+            print('loaded full weights + fresh trainable adapter')
     else:
         print("Initializing Lora weights")
         lora_config = LoraConfig(

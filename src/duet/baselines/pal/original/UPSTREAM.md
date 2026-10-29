@@ -29,6 +29,16 @@ below and must be re-documented here.
    raises `NotImplementedError: offload_to_cpu=True and NO_SHARD is not
    supported yet` on torch 2.0.1 at world_size=1. Made world-size-aware
    (`offload_to_cpu=self.world_size > 1`) — multi-GPU behavior unchanged.
+6. `train_lora.py` — `model.archive` assumed a LoRA adapter dir, but upstream's
+   own Step-1 (train.py) checkpoints contain only `policy.pt` full weights: the
+   two halves of their published pipeline don't connect without this. Patched
+   to accept both forms (adapter dir -> upstream path; full checkpoint -> load
+   weights as base + fresh trainable adapter with upstream's own else-branch
+   hyperparameters r=16/alpha=32).
+   Related upstream limitation left unpatched: FSDPTrainer.save's `is_lora`
+   branch writes an EMPTY policy.pt (payload `[]`) plus the adapter, and
+   decode.py has no PeftModel support — bridged by
+   `duet/baselines/pal/merge_lora_ckpt.py` (stage `02e`).
 
 ## Environment
 Run with `.venv-pal` (upstream's pinned 2023 requirements) — NOT the main `.venv`.
