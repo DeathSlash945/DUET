@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+# Stage 02b — PAL reproduction, Step 1: multi-task SFT (upstream train.py).
+#
+# Faithful to upstream scripts/gpt2.sh "Step 1", with three documented
+# adaptation classes (see src/duet/baselines/pal/original/UPSTREAM.md):
+#   1. MODEL:  HF hub id "gpt2" (their local copy was named gpt2-small;
+#              our train.py patch loads configured ids directly)
+#   2. DATA:   English ORIGIN split — the files published with their repo
+#              (train/valid_origin, valid#1, valid#2, test). Their gpt2.sh
+#              default of persona_chat_revised needs train_revised.txt,
+#              which is not distributed with the code.
+#   3. RUNTIME: single RTX 4060 (their scripts assume 2 GPUs), wandb off,
+#               all artifacts under outputs/ (gitignored).
+#
+# Usage:
+#   scripts/02b_pal_sft.sh            # full run: their hyperparams (10 epochs)
+#   SMOKE=1 scripts/02b_pal_sft.sh    # 512 examples — end-to-end pipeline check
+#
+# OOM knobs (edit here, in this order of preference):
+#   batch_size=64 ... then batch_size=32 ... then activation_checkpointing=true
+#   (effective micro-batch = batch_size / gradient_accumulation_steps)
+set -euo pipefail
+cd "$(dirname "$0")/.."
+REPO="$PWD"
+PY="$REPO/.venv-pal/bin/python"
+UP="$REPO/src/duet/baselines/pal/original"
+DATA="$REPO/data/raw/pal_format"
+RUNS="$REPO/outputs/pal_runs"
+
+test -x "$PY" || { echo "missing .venv-pal — install with:" >&2; echo "  python3.10 -m venv .venv-pal && .venv-pal/bin/pip install -r src/duet/baselines/pal/original/requirements.txt" >&2; exit 1; }
+test -f "$DATA/train_origin.txt" || { echo "missing data: $DATA/train_origin.txt (see stage 00 / git history)" >&2; exit 1; }
+mkdir -p "$RUNS"
+
+if [[ "${SMOKE:-0}" == "1" ]]; then
+  EXP="pal-sft-gpt2-origin-SMOKE"
+  SCALE=(n_epochs=1 n_examples=512 batch_size=16 gradient_accumulation_steps=2 eval_batch_size=32 eval_every=64)
+else
+  EXP="pal-sft-gpt2-origin-seed42"
+  SCALE=(n_epochs=10 batch_size=128 gradient_accumulation_steps=4 eval_batch_size=128)
+fi
+
+echo "== PAL SFT: exp=$EXP =="
+cd "$UP"
+"$PY" train.py \
+  model=gpt2-small model.name_or_path=gpt2 \
+  loss=sft \
+  exp_name="$EXP" \
+  trainer=FSDPTrainer \
+  data_mode=mixture \
+  lr=2e-5 seed=42 \
+  do_first_eval=false sample_during_eval=false \
+  +is_chinese=false +is_llama3=false \
+  +english_data_dir="$DATA" \
+  local_dirs="[$RUNS]" \
+  wandb.enabled=false \
+  "${SCALE[@]}" \
+  hydra.run.dir="$RUNS/hydra/${EXP}"
+echo "== done: artifacts in $RUNS/${EXP}_* (look for LATEST/policy.pt) =="

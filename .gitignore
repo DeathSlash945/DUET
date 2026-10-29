@@ -3,6 +3,7 @@ __pycache__/
 *.py[cod]
 *.egg-info/
 .venv/
+.venv-pal/
 venv/
 .pytest_cache/
 .ipynb_checkpoints/
@@ -23,6 +24,7 @@ checkpoints/
 # Experiment tracking & logs
 wandb/
 runs/
+.cache/
 *.log
 
 # OS / editor
