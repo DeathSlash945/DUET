@@ -17,7 +17,7 @@ Intermediate sanity checkpoints toward the full system:
 1. **SFT stage** (`02b_pal_sft.sh`): trains, evals, writes `<run>/LATEST/policy.pt` — ✅ smoke-verified; full run in progress.
 2. **DPO stage** (`train_lora.py` + generated pairs): SFT→DPO hand-off loads `LATEST/policy.pt`.
 3. **Decode stage** (`decode.py`): predictions on test/valid.
-4. **Metrics**: BLEU/ROUGE/Entropy standard implementations; **C.score = NLI consistency** — their checkpoint is a lab-internal path (`/home/data_91_d/ligr/model/entailment_nli_model`); we substitute a public English NLI model, and this metric belongs to Sumagna's harness anyway (two seeded NLI checkpoints, selection/scoring separation).
+4. **Metrics**: BLEU/ROUGE/Entropy standard implementations; **C.score = NLI consistency** — their checkpoint is a lab-internal path (`/home/data_91_d/ligr/model/entailment_nli_model`); we substitute a public English NLI model, and this metric belongs to Aparajith's harness anyway (two seeded NLI checkpoints, selection/scoring separation).
 
 ## Documented deviations from their run
 

@@ -1,9 +1,9 @@
-# COMPONENT B: latent persona attribute steering (Zala)
+# COMPONENT B: latent persona attribute steering (Kanishk)
 # Extract per-attribute directions (paired activations, mean difference per layer),
 # then sweep layer × magnitude at inference. GATE: single-attribute must work
 # BEFORE composition is attempted.
 # Run: scripts/05_extract_directions.sh && scripts/06_steer_eval.sh
-# Owner: Zala
+# Owner: Kanishk
 
 run_name: steer_sweep
 base_model: Qwen/Qwen2.5-1.5B-Instruct
@@ -25,5 +25,5 @@ composition:
   conflicting_pair: null                       # TODO: pick deliberately conflicting attributes
 
 eval:
-  sensitivity_metric: logprob_delta            # true vs perturbed profile (Zala defines, Sumagna runs)
+  sensitivity_metric: logprob_delta            # true vs perturbed profile (Kanishk defines, Aparajith runs)
   generations_out: outputs/steer/{layer}_{mag}/generations.jsonl

@@ -1,0 +1,41 @@
+# COMPONENT A: adversarial persona critic (Devanshu)
+# 5-way identification: 1 true profile + 3 distractors + no-match slot.
+# Reward (dpo_critic.yaml): P(critic identifies true profile | response).
+# GATE (Phase 1, plan §6): isolation validation must pass BEFORE any
+#   critic-guided DPO — thresholds below are first-cut; final bar set at
+#   Phase-1 review against observed baseline accuracies.
+# Run: scripts/04_train_critic.sh   (SMOKE=1 for a fast end-to-end check)
+# Owner: Devanshu
+
+run_name: critic
+# Encoder backbone. deberta-v3-base: strong NLI-style discrimination (~270M).
+# For quick iteration / low VRAM: distilbert-base-uncased.
+base_model: microsoft/deberta-v3-base
+checkpoint_dir: checkpoints/critic
+
+data:
+  train_path: data/processed/train.jsonl
+  eval_path: data/processed/valid.jsonl
+  max_seq_len: 256            # response + rendered profile (5 sentences)
+
+candidates:
+  n_distractors: 3            # + no-match slot => 5-way choice (chance 0.20)
+  distractor_pool: 300        # profiles sampled from per split
+  hard_fraction: 0.67         # 2 hard (highest Jaccard w/ true) + 1 random
+
+train:
+  epochs: 2
+  batch_size: 16
+  eval_batch_size: 32
+  lr: 2.0e-5
+  weight_decay: 0.01
+  warmup_ratio: 0.06
+  grad_clip: 1.0
+  bf16: true
+  seed: 42
+
+# Isolation-validation gate (checked by train.py; exit code 2 on failure)
+gate:
+  real_acc_min: 0.60          # held-out identification (chance 0.20)
+  copy_to_slot_min: 0.80      # verbatim profile copies -> no-match slot
+  generic_to_slot_min: 0.80   # canned replies -> no-match slot

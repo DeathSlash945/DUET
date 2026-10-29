@@ -1,6 +1,6 @@
 # DUET — Project Plan
 
-**Team Phronesis** · Devanshu Sabharwal, Zala Vedant, Sumagna Das
+**Team Phronesis** · Devanshu Sabharwal, Kanishk Nandeshwar, S Aparajith
 Machine Learning Course Project · 12-week plan
 Base implementation: [kylokano/PAL](https://github.com/kylokano/PAL) · Repo: [DeathSlash945/DUET](https://github.com/DeathSlash945/DUET)
 
@@ -29,9 +29,9 @@ One owner per training component; evaluation is owned by someone who does **not*
 
 | Member | Owns | Does **not** own |
 |---|---|---|
-| **Devanshu Sabharwal** | **Component A** — adversarial persona critic: architecture, negative sampling, adversarial refresh loop, critic-guided preference optimization run. **Component C** — bidirectional training (default owner; per SOP reassigned at Phase 3 start to whoever has capacity). **Stretch** — token-level credit assignment. | Evaluation metrics (Sumagna's). |
-| **Zala Vedant** | **Data pipeline** (retains *both* speakers' profiles), **Component B** — attribute direction extraction, layer & magnitude sweeps, composition experiments, log-probability persona sensitivity metrics. | Critic training, final eval harness. |
-| **Sumagna Das** | **Evaluation in full** — partner-persona suite, self-consistency ledger, drift curves, two independently seeded NLI checkpoints, Original→Revised robustness experiment, critic overoptimization study. | Any training component. |
+| **Devanshu Sabharwal** | **Component A** — adversarial persona critic: architecture, negative sampling, adversarial refresh loop, critic-guided preference optimization run. **Component C** — bidirectional training (default owner; per SOP reassigned at Phase 3 start to whoever has capacity). **Stretch** — token-level credit assignment. | Evaluation metrics (Aparajith's). |
+| **Kanishk Nandeshwar** | **Data pipeline** (retains *both* speakers' profiles), **Component B** — attribute direction extraction, layer & magnitude sweeps, composition experiments, log-probability persona sensitivity metrics. | Critic training, final eval harness. |
+| **S Aparajith** | **Evaluation in full** — partner-persona suite, self-consistency ledger, drift curves, two independently seeded NLI checkpoints, Original→Revised robustness experiment, critic overoptimization study. | Any training component. |
 
 **Interfaces between owners are contracts (Section 5)** — they let all three work in parallel from week 1.
 
@@ -52,10 +52,9 @@ DUET/
 │   ├── steer.yaml             # Component B
 │   └── bidir.yaml             # Component C
 ├── src/duet/
-│   ├── data/                  # Zala — PERSONA-CHAT pipeline
+│   ├── data/                  # Kanishk — PERSONA-CHAT pipeline
 │   │   ├── persona_chat.py    # loads data, KEEPS BOTH profiles
 │   │   ├── attributes.py      # profile → per-attribute segments (for B)
-│   │   ├── negatives.py       # distractor pools + copy probes (for A)
 │   │   └── schemas.py         # shared dataclasses / JSON schemas (contract)
 │   ├── baselines/
 │   │   ├── pal/               # reproduced from kylokano/PAL
@@ -65,13 +64,13 @@ DUET/
 │   │   ├── train.py           # critic training + isolation validation
 │   │   ├── refresh.py         # fixed-interval adversarial refresh
 │   │   └── rewards.py         # identification signal → preference pairs
-│   ├── steering/              # Zala — Component B
+│   ├── steering/              # Kanishk — Component B
 │   │   ├── extract.py         # paired-activation mean differences per layer
 │   │   ├── sweep.py           # layer × magnitude sweeps
 │   │   └── apply.py           # forward hooks, per-attribute magnitude
 │   ├── bidir/                 # Devanshu — Component C (both profiles in context)
 │   ├── training/              # shared SFT/DPO wrappers over TRL + PEFT
-│   └── eval/                  # Sumagna — evaluation harness
+│   └── eval/                  # Aparajith — evaluation harness
 │       ├── harness.py         # runs ALL metrics from one generations file
 │       ├── identifiability.py # held-out critic identification accuracy
 │       ├── nli.py             # two independently seeded NLI checkpoints
@@ -105,7 +104,7 @@ DUET/
 
 ## 5. Shared contracts (so the three workstreams never block each other)
 
-All defined in `src/duet/data/schemas.py` — one file, owned by Zala, consumed by everyone.
+All defined in `src/duet/data/schemas.py` — one file, owned by Kanishk, consumed by everyone.
 
 1. **Processed dialogue record** (`data/processed/{split}.jsonl`) — produced by the pipeline, consumed by SFT, critic, steering, and eval:
    ```json
@@ -120,7 +119,7 @@ All defined in `src/duet/data/schemas.py` — one file, owned by Zala, consumed 
    }
    ```
    *Both profiles are always present — this is what makes Component C possible with zero new data collection.*
-2. **Critic candidate sets** (`data/critic/{train,val}.jsonl`) — produced by `negatives.py`, consumed by `critic/`: response, true profile id, `k` distractor profiles (lexical-overlap bucketed), `is_copy_probe` flag.
+2. **Critic candidate sets** — produced and consumed *in-memory* by `critic/negatives.py` (`build_example`/`build_probes`), so no intermediate file is needed: response, true profile, `k` distractor profiles (lexical-overlap), no-match slot, and `copy`/`generic` probe flags. DPO pairs land in the §5 pair contract below via `critic/rewards.py`.
 3. **Attribute activation pairs** (`data/attrs/{layer}/{attribute}.npz`) — produced by `steering/extract.py`, consumed by sweeps and inference hooks.
 4. **Generation dump** (`outputs/{run_id}/generations.jsonl`) — the single handoff to evaluation:
    ```json
@@ -128,17 +127,17 @@ All defined in `src/duet/data/schemas.py` — one file, owned by Zala, consumed 
     "dialog_id": "...", "profile_self": [...], "profile_partner": [...],
     "response": "..."}
    ```
-   **Every member dumps generations in this format; Sumagna's harness computes all metrics from these files alone.** Training and grading stay decoupled by construction.
+   **Every member dumps generations in this format; Aparajith's harness computes all metrics from these files alone.** Training and grading stay decoupled by construction.
 
 ## 6. Phases & decision gates (12 weeks)
 
 | Phase | Weeks | Main work | Lead | **Gate (pass = continue, fail = fallback)** |
 |---|---|---|---|---|
-| **0 — Data + baselines** | 1–2 | Data pipeline keeping both profiles; reproduce PAL; implement PPT baseline; self-consistency ledger on off-the-shelf models | Zala (pipeline) + Devanshu (PAL/PPT) + Sumagna (ledger) | Baselines reproduce within a reasonable band of published numbers |
+| **0 — Data + baselines** | 1–2 | Data pipeline keeping both profiles; reproduce PAL; implement PPT baseline; self-consistency ledger on off-the-shelf models | Kanishk (pipeline) + Devanshu (PAL/PPT) + Aparajith (ledger) | Baselines reproduce within a reasonable band of published numbers |
 | **1 — Critic** | 3–5 | Train/validate critic in isolation → critic-guided preference optimization vs entailment baseline | Devanshu | Critic beats chance **by a wide margin** on held-out profiles **and** resists copy probes → else fallback: hand-built counterfactual perturbations |
-| **2 — Steering** | 5–7 | Direction extraction → layer/magnitude sweep → single-attribute eval → composition (2–3 attrs, conflicting pair) | Zala | Single-attribute steering must work **before** composition is attempted; failure = pre-authorized negative result, time reallocated |
+| **2 — Steering** | 5–7 | Direction extraction → layer/magnitude sweep → single-attribute eval → composition (2–3 attrs, conflicting pair) | Kanishk | Single-attribute steering must work **before** composition is attempted; failure = pre-authorized negative result, time reallocated |
 | **3 — Bidirectional** | 7–9 | Train with both profiles; partner-persona suite; drift curves across all conditions | Devanshu (or whoever has capacity — reassigned at Phase 3 start) | Strongest claim → **protected against schedule pressure** ahead of the other two |
-| **4 — Robustness + analysis** | 9–11 | Frozen-critic overoptimization study; Original→Revised robustness; full metric sweep; ablations; stretch only if core complete | Sumagna | **Scope freezes at week 10** — anything unfinished becomes a limitations paragraph |
+| **4 — Robustness + analysis** | 9–11 | Frozen-critic overoptimization study; Original→Revised robustness; full metric sweep; ablations; stretch only if core complete | Aparajith | **Scope freezes at week 10** — anything unfinished becomes a limitations paragraph |
 | **5 — Writing** | 11–12 | Report in paper form, including negative results | all | Final draft |
 
 **Compute policy baked into the schedule:** primary training on the local RTX 4060 (8 GB); Colab T4 for parallelizable sweeps/eval; 1.5B-class policy + LoRA (PEFT), bf16, gradient checkpointing, short context; long runs overnight locally; sweeps on subsampled data; **critic refreshed at fixed intervals, never continuously** (stability + cost).
@@ -163,12 +162,12 @@ All defined in `src/duet/data/schemas.py` — one file, owned by Zala, consumed 
 
 **Phase 3**
 - [ ] Component C training: both profiles in context (reassign per SOP if overloaded at Phase 3 start).
-- [ ] Export generations in the standard format for Sumagna's partner-persona suite.
+- [ ] Export generations in the standard format for Aparajith's partner-persona suite.
 
 **Stretch (only after A+B+C done)**
 - [ ] Token/prefix-weighted objective from critic prefix scoring (à la TDPO).
 
-### Zala — Data pipeline + Component B (+ sensitivity metrics)
+### Kanishk — Data pipeline + Component B (+ sensitivity metrics)
 
 **Phase 0**
 - [ ] PERSONA-CHAT download + preprocessing that **keeps both profiles** (ParlAI / HF Hub); Original **and** Revised versions.
@@ -180,12 +179,12 @@ All defined in `src/duet/data/schemas.py` — one file, owned by Zala, consumed 
 - [ ] Paired-activation collection: contexts where an attribute is expressed vs matched contexts where it is not → mean difference per layer (`extract.py`).
 - [ ] Layer × magnitude sweep for single attributes vs ordinary prompt conditioning.
 - [ ] Composition: 2- and 3-attribute mixtures — does each effect survive the others? Plus one deliberately conflicting pair (interference characterization).
-- [ ] Persona sensitivity delta: log-probability differences under true vs perturbed profiles — the metric for `eval/sensitivity.py` (hand the function to Sumagna, keep ownership of the definition).
+- [ ] Persona sensitivity delta: log-probability differences under true vs perturbed profiles — the metric for `eval/sensitivity.py` (hand the function to Aparajith, keep ownership of the definition).
 
 **Ongoing**
 - [ ] Keep the pipeline reproducible: one script regenerates `data/processed/` from raw.
 
-### Sumagna — Evaluation in full (starts week 1, never gated on training)
+### Aparajith — Evaluation in full (starts week 1, never gated on training)
 
 **Phase 0**
 - [ ] Self-consistency ledger on off-the-shelf models (baseline characterization before any training).

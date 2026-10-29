@@ -4,7 +4,7 @@ unmodified.
 
 Limitation by design: PAL's flat format only carries the SPEAKER's own
 profile — profile_partner comes back empty. The full both-profile record is
-produced by Zala's pipeline (scripts/01) from raw PERSONA-CHAT; this converter
+produced by Kanishk's pipeline (scripts/01) from raw PERSONA-CHAT; this converter
 is the Phase-0 stand-in for baseline runs.
 
 Usage:

@@ -1,7 +1,7 @@
 # COMPONENT C: bidirectional persona training (Devanshu; reassigned at Phase 3
 # start to whoever has capacity, per project_plan.md §6)
 # Train with BOTH profiles in context. Evaluated on partner-fact recall,
-# partner-contradiction rate, and partner-appropriate questions (Sumagna).
+# partner-contradiction rate, and partner-appropriate questions (Aparajith).
 # Run: scripts/03_dpo.sh --config configs/bidir.yaml  (or dedicated script once built)
 # Owner: Devanshu
 
@@ -14,7 +14,7 @@ data:
   eval_path: data/processed/valid.jsonl
   both_profiles: true                          # the whole point — partner profile stays in context
   profile_format: labeled                      # e.g. "You are:<self> Talking to:<partner>"
-  dataset_version: original                    # "revised" runs belong to Sumagna's robustness sweep
+  dataset_version: original                    # "revised" runs belong to Aparajith's robustness sweep
 
 train:
   algo: dpo

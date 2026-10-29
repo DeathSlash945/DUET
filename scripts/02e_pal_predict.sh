@@ -9,7 +9,7 @@
 # into LATEST/policy_merged.pt and point decode at that.
 #
 # C.score (NLI consistency) is NOT computed here — their NLI checkpoint is a lab
-# path; it belongs to Sumagna's eval harness with public NLI models.
+# path; it belongs to Aparajith's eval harness with public NLI models.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 REPO="$PWD"
