@@ -1,0 +1,13 @@
+# PHASE 0 — persona profile -> attribute segments (Component B input; Kanishk)
+# Consumed by: scripts/01_build_dataset.sh stage 2 -> python -m duet.data.attributes
+# Output: data/attrs/inventory_{original,revised}.json
+# The segmentation parameters are echoed into the inventory JSON so any build
+# is reproducible from this file alone.
+
+processed_dir: data/processed
+output_dir: data/attrs
+versions: [original, revised]
+splits: [train]          # steering contexts come from train only (no eval leakage)
+split_compound: false    # true = also split "i like x and i like y"-style clauses
+min_count: 1             # keep every attribute; steering filters by count later
+max_examples: 5          # distinct surface forms kept per attribute

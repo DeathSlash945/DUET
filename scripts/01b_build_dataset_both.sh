@@ -17,5 +17,7 @@ cd "$(dirname "$0")/.."
 REPO="$PWD"
 test -f data/raw/personachat_original/train_both_original.txt || {
   echo "missing data/raw/personachat_original/ (see header download cmd)" >&2; exit 1; }
-PYTHONPATH="$REPO/src" "$REPO/.venv/bin/python" -m duet.bidir.dataset \
+PY="$REPO/.venv/Scripts/python.exe"          # Windows venv layout
+[ -x "$PY" ] || PY="$REPO/.venv/bin/python"  # WSL / Git Bash layout
+PYTHONPATH="src" "$PY" -m duet.bidir.dataset \
   --src data/raw/personachat_original --out data/processed "$@"
