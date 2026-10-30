@@ -12,6 +12,7 @@ init_from: outputs/sft/LATEST
 data:
   train_path: data/processed/train.jsonl
   eval_path: data/processed/valid.jsonl
+  max_seq_len: 1024                           # DPO max_length (run_dpo fallback: 1024)
   both_profiles: true                          # the whole point — partner profile stays in context
   profile_format: labeled                      # e.g. "You are:<self> Talking to:<partner>"
   dataset_version: original                    # "revised" runs belong to Aparajith's robustness sweep

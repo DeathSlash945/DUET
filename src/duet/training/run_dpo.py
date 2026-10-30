@@ -16,8 +16,9 @@ from pathlib import Path
 from datasets import Dataset
 from trl import DPOConfig, DPOTrainer
 
-from .common import (config_args, dump_generations, load_policy, load_yaml,
-                     read_jsonl, save_with_latest, to_ns)
+from .common import (apply_profile_scope, cfg_get, config_args,
+                     dump_generations, load_policy, load_yaml, read_jsonl,
+                     save_with_latest, to_ns)
 
 REQUIRED = ("prompt", "chosen", "rejected")
 
@@ -46,7 +47,7 @@ def main():
 
     args = DPOConfig(
         output_dir=f"outputs/{cfg.run_name}",
-        max_length=cfg.data.max_seq_len,
+        max_length=cfg_get(cfg.data, "max_seq_len", 1024),
         **{**config_args(vars(cfg.train), DPOConfig),
            "beta": cfg.train.beta,
            "eval_strategy": "no",          # real eval = generation dump + harness
@@ -54,7 +55,9 @@ def main():
            "report_to": [],
            "logging_steps": 5},
     )
-    ds = Dataset.from_list(pairs)
+    # Pair metadata (scores, signal tags) stays in the jsonl for auditing but
+    # must not reach the trainer — TRL wants exactly prompt/chosen/rejected.
+    ds = Dataset.from_list([{k: r[k] for k in REQUIRED} for r in pairs])
     trainer = DPOTrainer(model=model, ref_model=None,  # implicit ref: adapter off
                          args=args, train_dataset=ds, processing_class=tok)
     trainer.train()
@@ -64,8 +67,10 @@ def main():
 
     if a.dump_generations:
         eval_recs = read_jsonl(cfg.data.eval_path) if Path(cfg.data.eval_path).exists() else []
-        n = dump_generations(
-            trainer.model, tok, eval_recs,
+        eval_recs = apply_profile_scope(
+            eval_recs, cfg_get(cfg.data, "both_profiles", True))  # dump must
+        n = dump_generations(                                    # match the
+            trainer.model, tok, eval_recs,                       # condition
             Path(args.output_dir) / "generations.jsonl",
             run_id=cfg.run_name, model_name=cfg.base_model,
             condition=cfg.run_name, limit=a.dump_generations,

@@ -1,0 +1,43 @@
+# PPT BASELINE — Pseudo Preference Tuning (Takayama et al., COLING 2025,
+# pp. 5507-5514; aclanthology.org/2025.coling-main.369). Phase-0 second baseline.
+# DPO on pseudo-preference pairs built WITHOUT external NLI data:
+#   rejected = pi_sft(y' | p_swapped, x) — persona from a DIFFERENT dialogue;
+#   chosen   = gold response under the TRUE persona (paper §3, Fig. 1).
+# Paper Appendix B: beta 0.5, lr 1e-6, 3 epochs (best val acc), eff batch 4.
+# Matched with our DPO runs on base model / SFT init / data / seed; beta
+# follows THE PAPER, not our 0.1 — claim-1 head-to-head matching binds
+# dpo_entailment vs dpo_critic only, so paper fidelity wins here.
+# Run: scripts/02f_ppt_pairs.sh  then  scripts/03_dpo.sh configs/ppt.yaml
+# Owner: Devanshu
+
+run_name: ppt
+base_model: Qwen/Qwen2.5-1.5B-Instruct
+init_from: outputs/sft/LATEST                  # pi_sft: negatives AND DPO init
+
+signal:
+  type: pseudo_preference                      # no NLI model — persona swap only
+  pair_source: ppt
+
+data:
+  train_path: data/processed/train.jsonl
+  eval_path: data/processed/valid.jsonl
+  both_profiles: true
+  max_seq_len: 1024                           # DPO max_length (run_dpo fallback: 1024)
+
+generation:                                    # pseudo-negatives y' ~ pi_sft(.|p_j, x)
+  max_new_tokens: 64                          # same decode budget as dumps
+  do_sample: true                             # paper writes y' ~ pi_sft (sampled)
+  temperature: 1.0                            # vLLM defaults — Appendix B leaves
+  top_p: 1.0                                  # sampling params UNSTATED (deviation log)
+  batch_size: 16                              # 1.5B bf16 generate fits easily
+
+train:
+  algo: dpo
+  beta: 0.5                                   # paper Appendix B (NOT our 0.1)
+  epochs: 3
+  per_device_batch_size: 2
+  grad_accum: 2                               # eff batch 4 = paper
+  lr: 1.0e-6
+  bf16: true
+  gradient_checkpointing: true
+  seed: 42

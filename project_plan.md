@@ -151,7 +151,7 @@ All defined in `src/duet/data/schemas.py` — one file, owned by Kanishk, consum
 **Phase 0**
 - [ ] Set up repo skeleton (Section 4), `requirements.txt`, `.gitignore`, CI-less smoke test.
 - [ ] Reproduce PAL end-to-end on our hardware: `data_mode` variants, LoRA SFT → DPO; record baseline numbers in `reports/`.
-- [ ] Reimplement the PPT baseline from its paper (persona-swapped negative pairs).
+- [ ] Reimplement the PPT baseline from its paper (persona-swapped negative pairs). Code done: `baselines/ppt/pairs.py` + `configs/ppt.yaml` (stage `scripts/02f_ppt_pairs.sh` → `scripts/03_dpo.sh configs/ppt.yaml`); reproduction band pending the GPU run.
 - [ ] Stand up `training/` wrappers (TRL + PEFT) so DPO runs take a config, not code edits.
 
 **Phase 1**

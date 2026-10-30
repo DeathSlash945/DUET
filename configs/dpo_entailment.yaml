@@ -18,6 +18,7 @@ signal:
 data:
   train_path: data/processed/train.jsonl
   eval_path: data/processed/valid.jsonl
+  max_seq_len: 1024                           # DPO max_length (run_dpo fallback: 1024)
 
 train:
   algo: dpo                                    # TRL DPOTrainer
