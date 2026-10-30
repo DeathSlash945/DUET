@@ -6,24 +6,35 @@
 # Owner: Kanishk
 
 run_name: steer_sweep
-base_model: Qwen/Qwen2.5-1.5B-Instruct
-policy_ckpt: outputs/sft/LATEST                # steering applied to the SFT policy
+base_model: Qwen/Qwen2.5-0.5B-Instruct         # matches the extracted 896-d directions
+policy_ckpt: null                              # set only to a compatible 0.5B policy checkpoint
 
 extract:
   activations_path: data/attrs                 # data/attrs/{layer}/{attribute}.npz
   pairs_per_attribute: 256                     # expressed vs matched-not-expressed contexts
   normalization: mean_diff                     # mean(expressed) - mean(not expressed)
+  profile_side: self                           # self | partner | either — side that must express the attribute
+  activation: last_token                       # residual stream at final prompt token (gold target never encoded)
+  context_length: 256                          # truncate longer prompts
+  selection_top_k: 0                           # 0 = every inventory attribute with enough contexts
+  batch_size: 8                                # forward-pass batch size
 
 sweep:
-  layers: [6, 10, 14, 18, 22]                  # TODO: extend after first pass
+  directions_root: data/attrs/qwen2_5_0_5b_original_256pairs_chunks
+  layers: [0, 23]                              # layers validated in the 256-pair extraction
   magnitudes: [0.5, 1.0, 1.5, 2.0, 3.0]
+  position: last_token                         # batch-size-one autoregressive generation
+  results_dir: outputs/steer_sweeps            # writes sweep_results.{csv,json}; never overwrites
   comparison: prompt_conditioning              # steering vs ordinary profile-in-prompt
 
 composition:
   enabled: false                               # flip to true only after single-attribute gate passes
   sizes: [2, 3]
-  conflicting_pair: null                       # TODO: pick deliberately conflicting attributes
+  conflicting_pair: [i am married, i am single]
+  max_sets_per_size: 0                          # 0 = all; cap before costly generation
+  results_dir: outputs/steer_composition        # writes composition_results.{csv,json}; never overwrites
 
 eval:
   sensitivity_metric: logprob_delta            # true vs perturbed profile (Kanishk defines, Aparajith runs)
+  sensitivity_results_dir: outputs/steer_sensitivity
   generations_out: outputs/steer/{layer}_{mag}/generations.jsonl
