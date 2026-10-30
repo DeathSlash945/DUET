@@ -13,8 +13,9 @@ from pathlib import Path
 from datasets import Dataset
 from trl import SFTConfig, SFTTrainer
 
-from .common import (config_args, dump_generations, load_policy, load_yaml,
-                     read_jsonl, save_with_latest, to_ns)
+from .common import (apply_profile_scope, config_args, dump_generations,
+                     cfg_get, load_policy, load_yaml, read_jsonl,
+                     save_with_latest, to_ns)
 from .prompting import format_sft_text
 
 TEXT_FIELD = "__text"
@@ -37,11 +38,13 @@ def main():
     a = ap.parse_args()
 
     cfg = to_ns(load_yaml(a.config))
-    train_recs = read_jsonl(cfg.data.train_path)
+    both = cfg_get(cfg.data, "both_profiles", True)
+    train_recs = apply_profile_scope(read_jsonl(cfg.data.train_path), both)
     eval_recs = read_jsonl(cfg.data.eval_path) if Path(cfg.data.eval_path).exists() else None
     if eval_recs is not None:
-        eval_recs = eval_recs[:a.max_eval_examples]
-    print(f"train rows: {len(train_recs)} | eval rows: {len(eval_recs) if eval_recs else 0}")
+        eval_recs = apply_profile_scope(eval_recs, both)[:a.max_eval_examples]
+    print(f"train rows: {len(train_recs)} | eval rows: {len(eval_recs) if eval_recs else 0}"
+          f" | both_profiles: {both}")
 
     train_ds = Dataset.from_list(build_rows(train_recs, a.max_examples))
     eval_ds = Dataset.from_list(build_rows(eval_recs)) if eval_recs else None

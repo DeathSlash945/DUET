@@ -82,15 +82,18 @@ def main():
     ap.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     a = ap.parse_args()
 
-    from ..training.common import load_yaml, to_ns, cfg_get
+    from ..training.common import (apply_profile_scope, cfg_get, load_yaml,
+                                   to_ns)
     cfg = to_ns(load_yaml(a.config))
     ckpt = a.critic or f"{cfg_get(cfg, 'checkpoint_dir', 'checkpoints/critic')}/LATEST"
     model, tok = load_critic(ckpt)
     model.to(a.device)
 
-    train_recs = read_jsonl(cfg.data.train_path)
-    cfg.pool = [(r["id"], r["profile_self"]) for r in train_recs]
-    records_by_id = {r["id"]: r for r in train_recs}
+    train_recs = apply_profile_scope(
+        read_jsonl(cfg.data.train_path),
+        cfg_get(cfg.data, "both_profiles", True))   # pairs must match the
+    cfg.pool = [(r["id"], r["profile_self"]) for r in train_recs]  # DPO run's
+    records_by_id = {r["id"]: r for r in train_recs}              # condition
 
     pairs = build_pairs(records_by_id, read_jsonl(a.generations), cfg,
                         model, tok, a.device, seed=cfg.train.seed)

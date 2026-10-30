@@ -125,7 +125,7 @@ All defined in `src/duet/data/schemas.py` — one file, owned by Kanishk, consum
 3. **Attribute activation pairs** (`data/attrs/{layer}/{attribute}.npz`) — produced by `steering/extract.py`, consumed by sweeps and inference hooks.
 4. **Generation dump** (`outputs/{run_id}/generations.jsonl`) — the single handoff to evaluation:
    ```json
-   {"run_id": "...", "model": "...", "condition": "sft|dpo_entailment|dpo_critic|steer|bidir",
+   {"run_id": "...", "model": "...", "condition": "sft|sft_selfonly|dpo_entailment|dpo_critic|steer|bidir",
     "dialog_id": "...", "profile_self": [...], "profile_partner": [...],
     "response": "..."}
    ```

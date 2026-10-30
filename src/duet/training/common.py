@@ -74,6 +74,19 @@ def resolve_init(path):
     return str(p)
 
 
+def apply_profile_scope(records, both_profiles: bool) -> list:
+    """Component C data switch: keep or strip profile_partner BEFORE prompting.
+
+    The self-only and bidirectional conditions share format_prompt and every
+    other setting — they differ by data alone (README claim 3). Applied at
+    record load in every entry point so training text and dumped generation
+    prompts always agree.
+    """
+    if both_profiles:
+        return records
+    return [{**r, "profile_partner": []} for r in records]
+
+
 def cfg_get(obj, key, default=None):
     """Read key from a dict or SimpleNamespace interchangeably."""
     return obj.get(key, default) if isinstance(obj, dict) else getattr(obj, key, default)

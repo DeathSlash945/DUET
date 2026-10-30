@@ -1,0 +1,35 @@
+# COMPONENT C baseline: self-only SFT — the ablation half of the bidirectional
+# contrast (README claim 3: "does the model actually USE the partner's persona?").
+# Matched with sft.yaml: identical model, data, LoRA, hyperparams, seed — the
+# ONLY difference is data.both_profiles=false (profile_partner stripped before
+# prompting, so format_prompt omits the PARTNER section). Everything else must
+# stay byte-identical to keep the comparison signal-only-free.
+# Eval: pair its generation dump against the bidir one in Aparajith's partner
+# suite (partner-fact recall, partner-contradiction, partner-appropriate
+# questions). Conditions: "sft_selfonly" vs "sft" (both-profiles default).
+# Run: scripts/02_sft.sh configs/sft_selfonly.yaml
+# Owner: Devanshu.
+
+run_name: sft_selfonly
+base_model: Qwen/Qwen2.5-1.5B-Instruct
+
+data:
+  train_path: data/processed/train.jsonl
+  eval_path: data/processed/valid.jsonl
+  both_profiles: false                         # THE only difference vs sft.yaml
+  max_seq_len: 1024
+
+lora:
+  r: 16
+  alpha: 32
+  dropout: 0.05
+  target_modules: [q_proj, k_proj, v_proj, o_proj]
+
+train:
+  epochs: 3
+  per_device_batch_size: 2
+  grad_accum: 8
+  lr: 2.0e-4
+  bf16: true
+  gradient_checkpointing: true
+  seed: 42

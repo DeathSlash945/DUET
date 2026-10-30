@@ -43,7 +43,11 @@ if [[ "${SMOKE:-0}" == "1" ]]; then
 else
   EXP="pal-sft-gpt2-origin-seed42"
   # micro = 128/32 = 4 (OOM-safe with checkpointing), EFFECTIVE batch 128 = upstream's published value
-  SCALE=(n_epochs=10 batch_size=128 gradient_accumulation_steps=32 eval_batch_size=32 activation_checkpointing=true)
+  # eval_batch_size: upstream default 32 OOMs on 8GB — eval runs fp32
+  # log_softmax over full logits (32 x seq x 50257 x 4B = 2.76 GiB) ON TOP of
+  # the 4.2 GiB training state (killed the 2026-10-30 run at step 781).
+  # At 4: ~0.35 GiB — safe. Eval also SAVES checkpoints, so it must survive.
+  SCALE=(n_epochs=10 batch_size=128 gradient_accumulation_steps=32 eval_batch_size=4 activation_checkpointing=true)
 fi
 
 echo "== PAL SFT: exp=$EXP =="
