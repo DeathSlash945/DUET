@@ -41,7 +41,7 @@ Raw data, outputs, and checkpoints are gitignored (`data/`, `outputs/`). Regener
 
 ## Working agreements
 
-- Feature branch per task (`devanshu/critic-train`, `zala/data-pipeline`, `sumagna/eval-harness`); one teammate review before merging to `main`.
+- Feature branch per task (`devanshu/critic-train`, `kanishk/data-pipeline`, `aparajith/eval-harness`); one teammate review before merging to `main`.
 - Every run reproducible from `configs/*.yaml` + a script.
 - All models dump generations to `outputs/{run_id}/generations.jsonl` in the shared format (see `project_plan.md` §5) — the eval harness consumes that file and nothing else.
 

@@ -83,6 +83,7 @@ DUET/
 ├── scripts/                   # runnable entry points, one per stage
 │   ├── 00_download_data.sh
 │   ├── 01_build_dataset.sh
+│   ├── 01b_build_dataset_both.sh  # Component C: both-profile processed data
 │   ├── 02_sft.sh
 │   ├── 03_dpo.sh
 │   ├── 04_train_critic.sh
@@ -96,7 +97,7 @@ DUET/
 
 **Working agreements**
 
-- **Branches:** `main` = working state; one feature branch per member per task (`devanshu/critic-train`, `zala/data-pipeline`, `sumagna/eval-harness`). No direct pushes to `main`; one teammate reviews before merge.
+- **Branches:** `main` = working state; one feature branch per member per task (`devanshu/critic-train`, `kanishk/data-pipeline`, `aparajith/eval-harness`). No direct pushes to `main`; one teammate reviews before merge.
 - **Everything is config-driven:** a run must be reproducible from `configs/*.yaml` + a script, never from edited notebook state.
 - **Commit style:** short imperative summary + what/why in body (`add distractor sampling with lexical-overlap buckets`).
 - **Raw data and checkpoints never enter git** (`.gitignore` enforces it).
@@ -119,6 +120,7 @@ All defined in `src/duet/data/schemas.py` — one file, owned by Kanishk, consum
    }
    ```
    *Both profiles are always present — this is what makes Component C possible with zero new data collection.*
+   *Since stage 01b (`bidir/dataset.py`, Devanshu) the processed files derive from the original ParlAI `*_both_original.txt` (both speakers' personas per dialogue) and additionally carry:* `perspective` *(`self`|`partner` — partner-perspective records are synthesized by role swap),* `persona_self_id`/`persona_partner_id` *(sha1 of the persona sentence tuple — enables profile-level holdout for the critic), and* `dataset_version: "original_both"`.
 2. **Critic candidate sets** — produced and consumed *in-memory* by `critic/negatives.py` (`build_example`/`build_probes`), so no intermediate file is needed: response, true profile, `k` distractor profiles (lexical-overlap), no-match slot, and `copy`/`generic` probe flags. DPO pairs land in the §5 pair contract below via `critic/rewards.py`.
 3. **Attribute activation pairs** (`data/attrs/{layer}/{attribute}.npz`) — produced by `steering/extract.py`, consumed by sweeps and inference hooks.
 4. **Generation dump** (`outputs/{run_id}/generations.jsonl`) — the single handoff to evaluation:
