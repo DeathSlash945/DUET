@@ -28,7 +28,7 @@ stage() { echo "--- $(date '+%H:%M:%S') $*" | tee -a "$LOG"; }
 # ---------------------------------------------------------------- critic arm
 stage "1/5 sample $N candidates from pi_sft (bidir SFT)"
 $PY -u -m duet.eval.sample --adapter outputs/sft/final --limit "$N" \
-    --out data/dpo/cand_sft.jsonl --condition sft_bidir >> "$LOG" 2>&1
+    --out data/dpo/cand_sft.jsonl --condition sft_bidir --device cuda >> "$LOG" 2>&1
 echo "    exit=$?" | tee -a "$LOG"
 
 stage "2/5 critic-score candidates -> pairs"
