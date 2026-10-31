@@ -137,12 +137,50 @@ def save_with_latest(model, out_dir) -> None:
 
 # --------------------------------------------------------------------------- dumps
 
+def trim_turn(text: str) -> str:
+    """Cut a generation at the next dialogue turn marker.
+
+    The plain-text prompt format (duet.training.prompting) ends at
+    ``assistant:``; without a cut the model rolls into the next turn
+    (``"...\nuser: ..."``), polluting every downstream metric.
+    """
+    low = text.lower()
+    cut = len(text)
+    for marker in ("\nuser", "\nassistant"):
+        pos = low.find(marker)
+        if pos != -1:
+            cut = min(cut, pos)
+    return text[:cut].strip()
+
+
 def dump_generations(model, tok, rows, out_path, *, run_id, model_name,
-                     condition, max_new_tokens=64, limit=None) -> int:
-    """Write §5 generations.jsonl — the only file the eval harness consumes."""
+                     condition, max_new_tokens=64, limit=None,
+                     samples_per_dialog=1, do_sample=False,
+                     temperature=1.0) -> int:
+    """Write §5 generations.jsonl — the only file the eval harness consumes.
+
+    ``samples_per_dialog`` > 1 writes K rows per dialog sharing ``dialog_id``
+    (plus ``sample_idx``); this is the candidate pool for select-then-generate
+    pair arms. K == 1 with ``do_sample=False`` (default) reproduces the
+    original greedy training dump exactly.
+    """
     from .prompting import format_prompt
 
     rows = rows[:limit] if limit else rows
+    k = max(1, int(samples_per_dialog))
+    # ChatML turn boundary: without an explicit stop the model keeps writing
+    # the next "user:" turn into the response (observed in early dumps).
+    stop_ids = []
+    for token in ("<|im_end|>", "<|endoftext|>"):
+        try:
+            tid = tok.convert_tokens_to_ids(token)
+        except Exception:
+            tid = None
+        if isinstance(tid, int) and tid >= 0 and tid != tok.unk_token_id:
+            stop_ids.append(tid)
+    if tok.eos_token_id is not None:
+        stop_ids.append(tok.eos_token_id)
+    stop_ids = sorted(set(stop_ids))
     model.eval()
     n = 0
     Path(out_path).parent.mkdir(parents=True, exist_ok=True)
@@ -151,21 +189,29 @@ def dump_generations(model, tok, rows, out_path, *, run_id, model_name,
             prompt = format_prompt(rec["history"], rec["profile_self"],
                                    rec.get("profile_partner"))
             ids = tok(prompt, return_tensors="pt").to(model.device)
-            with torch.no_grad():
-                out = model.generate(
-                    **ids, max_new_tokens=max_new_tokens, do_sample=False,
-                    pad_token_id=tok.pad_token_id,
-                )
-            text = tok.decode(out[0][ids["input_ids"].shape[1]:],
-                              skip_special_tokens=True)
-            f.write(json.dumps({
-                "run_id": run_id,
-                "model": model_name,
-                "condition": condition,
-                "dialog_id": rec.get("id", str(n)),
-                "profile_self": rec["profile_self"],
-                "profile_partner": rec.get("profile_partner", []),
-                "response": text.strip(),
-            }, ensure_ascii=False) + "\n")
-            n += 1
+            for j in range(k):
+                with torch.no_grad():
+                    out = model.generate(
+                        **ids, max_new_tokens=max_new_tokens,
+                        do_sample=do_sample,
+                        temperature=(temperature if do_sample else None),
+                        eos_token_id=stop_ids or None,
+                        pad_token_id=tok.pad_token_id,
+                    )
+                text = tok.decode(out[0][ids["input_ids"].shape[1]:],
+                                  skip_special_tokens=True)
+                text = trim_turn(text)
+                row = {
+                    "run_id": run_id,
+                    "model": model_name,
+                    "condition": condition,
+                    "dialog_id": rec.get("id", str(n)),
+                    "profile_self": rec["profile_self"],
+                    "profile_partner": rec.get("profile_partner", []),
+                    "response": text.strip(),
+                }
+                if k > 1:
+                    row["sample_idx"] = j
+                f.write(json.dumps(row, ensure_ascii=False) + "\n")
+                n += 1
     return n

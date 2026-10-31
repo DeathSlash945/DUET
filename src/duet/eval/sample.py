@@ -32,6 +32,12 @@ def main():
     ap.add_argument("--condition", default="sample")
     ap.add_argument("--max-new-tokens", type=int, default=64)
     ap.add_argument("--device", default=None)
+    ap.add_argument("--samples-per-dialog", type=int, default=1,
+                    help="K samples per dialog (K>1 = candidate pool for "
+                         "select-then-generate arms; forces sampling)")
+    ap.add_argument("--do-sample", action="store_true",
+                    help="sample instead of greedy (implied by K>1)")
+    ap.add_argument("--temperature", type=float, default=1.0)
     a = ap.parse_args()
 
     cfg = to_ns(load_yaml(a.config))
@@ -49,6 +55,9 @@ def main():
         model, tok, records, a.out,
         run_id="sample", model_name=cfg.base_model, condition=a.condition,
         max_new_tokens=a.max_new_tokens, limit=a.limit,
+        samples_per_dialog=a.samples_per_dialog,
+        do_sample=a.do_sample or a.samples_per_dialog > 1,
+        temperature=a.temperature,
     )
     print(f"wrote {n} generations -> {a.out}")
 
