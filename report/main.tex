@@ -12,6 +12,8 @@
 \usepackage{cite}
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta,positioning}
+\newcommand{\up}{$\uparrow$}
+\newcommand{\down}{$\downarrow$}
 \hyphenation{op-tical net-works semi-conduc-tor IEEE-Xplore}
 
 \begin{document}
@@ -19,8 +21,7 @@
 \title{DUET: Adversarial Persona Critics and Bidirectional Personas for
 Persona-Consistent Dialogue Generation}
 
-% TODO: fill roll numbers before submission
-\author{Devanshu~Sabharwal,~Kanishk~Nandeshwar,~and~S.~Aparajith}
+\author{Devanshu~Sabharwal~(B24DS007),~Kanishk~Nandeshwar~(B24DS010),~and~S.~Aparajith~(B24DS507)}
 \markboth{Machine Learning Project --- Final Report,~November 2026}{}
 \maketitle
 
@@ -185,6 +186,7 @@ prefix scores~\cite{zeng2024tdpo}.
 
 \begin{figure*}[!t]
 \centering
+\resizebox{\textwidth}{!}{%
 \begin{tikzpicture}[
   node distance=6mm and 9mm,
   box/.style={draw, rounded corners, align=center, inner sep=4pt, font=\footnotesize},
@@ -204,7 +206,7 @@ prefix scores~\cite{zeng2024tdpo}.
   \draw[arr] (sft) |- (dpo);
   \draw[arr] (dpo) -- (dump);
   \draw[arr] (dump) -- (eval);
-\end{tikzpicture}
+\end{tikzpicture}}
 \caption{DUET pipeline. Training and grading are decoupled by construction:
 every condition dumps generations in one contract format and is graded by a
 single harness that never saw the pair-building signal.}
@@ -271,7 +273,7 @@ are reported against the published band.
 \caption{Interim PAL SFT progress (GPT-2 small, origin, effective batch 128).}
 \label{tab:interim}
 \centering
-\small
+\footnotesize
 \begin{tabular}{lccc}
 \hline
 Attempt & Examples & Train loss & Outcome \\
@@ -300,7 +302,7 @@ pre-registered comparison: all rows share policy, data, budget, and seed.
 harness once Phase-1--3 runs complete.}
 \label{tab:main}
 \centering
-\scriptsize
+\resizebox{\columnwidth}{!}{%
 \begin{tabular}{lcccccc}
 \hline
 Condition & Identif.\up & Copy\down & Halluc.\down & Contrad.\down &
@@ -312,7 +314,7 @@ DPO entailment & -- & -- & -- & -- & -- & -- \\
 DPO critic (ours) & -- & -- & -- & -- & -- & -- \\
 DPO pseudo (PPT) & -- & -- & -- & -- & -- & -- \\
 \hline
-\end{tabular}
+\end{tabular}}
 \end{table}
 
 \textbf{Analysis plan.} We will report (i) whether the critic arm beats the
