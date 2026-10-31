@@ -26,7 +26,7 @@ lora:
   target_modules: [q_proj, k_proj, v_proj, o_proj]
 
 train:
-  epochs: 3
+  epochs: 1                        # SPRINT: deadline budget (documented in report)
   per_device_batch_size: 2
   grad_accum: 8
   lr: 2.0e-4

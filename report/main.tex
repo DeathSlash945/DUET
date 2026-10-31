@@ -301,7 +301,8 @@ critic-guided DPO is permitted; failures are reported as-is.
 
 \begin{table}[!t]
 \caption{Component A isolation gate — identification critic (5-way, chance
-0.200, roberta-base). TBD: fill from \texttt{critic\_train\_full.log}.}
+0.200, roberta-base; 20k-record sprint budget, 1 epoch). TBD: fill from
+\texttt{sprint2\_critic.log}.}
 \label{tab:gate}
 \centering
 \footnotesize
@@ -317,12 +318,13 @@ Generic reply $\to$ no-match slot & -- & $\geq$ 0.80 \\
 \end{table}
 
 \textbf{Sprint SFT conditions (pending runs).} Matched self-only vs.\
-bidirectional SFT on a capped 15k-record budget (3 epochs), scored by the
-preliminary contract-only metrics of \S\ref{sec:setup}:
+bidirectional SFT on a capped 10k-record budget (1 epoch, deadline sprint;
+the original design in \S\ref{sec:setup} is 10 epochs over the full set),
+scored by the preliminary contract-only metrics of \S\ref{sec:setup}:
 Table~\ref{tab:sprint}.
 
 \begin{table}[!t]
-\caption{Sprint SFT conditions (15k records $\times$ 3 epochs, seed 42).
+\caption{Sprint SFT conditions (10k records $\times$ 1 epoch, seed 42).
 TBD: fill from \texttt{eval/prelim.py} on both generation dumps.}
 \label{tab:sprint}
 \centering
