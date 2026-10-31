@@ -23,6 +23,7 @@
 #   activation_checkpointing=true ... then halve max_length.
 set -euo pipefail
 cd "$(dirname "$0")/.."
+export PYTHONUNBUFFERED=1   # stats must hit the log immediately (buffered stdout hid heartbeats)
 REPO="$PWD"
 PY="$REPO/.venv-pal/bin/python"
 UP="$REPO/src/duet/baselines/pal/original"
