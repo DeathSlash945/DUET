@@ -317,15 +317,17 @@ Generic reply $\to$ no-match slot & -- & $\geq$ 0.80 \\
 \end{tabular}
 \end{table}
 
-\textbf{Sprint SFT conditions (pending runs).} Matched self-only vs.\
+\textbf{Sprint SFT conditions (completed).} Matched self-only vs.\
 bidirectional SFT on a capped 10k-record budget (1 epoch, deadline sprint;
 the original design in \S\ref{sec:setup} is 10 epochs over the full set),
 scored by the preliminary contract-only metrics of \S\ref{sec:setup}:
-Table~\ref{tab:sprint}.
+Table~\ref{tab:sprint}. Both conditions see identical records, budget, and
+seed; they differ only in whether the partner profile section is present
+(\S\ref{sec:method}).
 
 \begin{table}[!t]
-\caption{Sprint SFT conditions (10k records $\times$ 1 epoch, seed 42).
-TBD: fill from \texttt{eval/prelim.py} on both generation dumps.}
+\caption{Sprint SFT conditions (10k records $\times$ 1 epoch, seed 42;
+64 held-out generations each, scored by \texttt{eval/prelim.py}).}
 \label{tab:sprint}
 \centering
 \footnotesize
@@ -333,15 +335,28 @@ TBD: fill from \texttt{eval/prelim.py} on both generation dumps.}
 \hline
 Condition & n & copy@1 & copy@4 & self & partner & len \\
 \hline
-SFT self-only & -- & -- & -- & -- & -- & -- \\
-SFT bidirectional & -- & -- & -- & -- & -- & -- \\
+SFT self-only & 64 & 0.179 & 0.005 & 0.109 & --- & 43.7 \\
+SFT bidirectional & 64 & 0.198 & 0.005 & 0.123 & 0.086 & 47.5 \\
 \hline
 \end{tabular}
 \end{table}
 
+Bidirectional conditioning is already visible at this budget. The
+bidirectional model attains the lower train loss (1.80 vs.\ 2.00), higher
+self coverage (0.123 vs.\ 0.109), longer responses (47.5 vs.\ 43.7 tokens),
+and the only non-zero partner coverage (0.086); the self-only model reaches
+a slightly lower copy@1 (0.179 vs.\ 0.198), which is expected because
+copy@1 rewards reproducing profile wording verbatim and the self-only
+contract never asks the model to track a partner. copy@4 sits at the floor
+(0.005) for both, i.e.\ neither model regenerates a held-out response
+exactly. With 64 generations per condition and one epoch these differences
+are directional rather than conclusive: the self-only condition confirms the
+negative control (partner coverage is undefined by contract, not merely
+low), and the conditions diverge in the predicted direction with the partner
+section present.
+
 \textbf{Main comparison (pending runs).} Table~\ref{tab:main} is the
 pre-registered comparison: all rows share policy, data, budget, and seed.
-
 \begin{table}[!t]
 \caption{Main matched-conditions comparison. TBD: fill from the evaluation
 harness once Phase-1--3 runs complete.}
