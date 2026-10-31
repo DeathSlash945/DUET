@@ -194,24 +194,24 @@ prefix scores~\cite{zeng2024tdpo}.
 \centering
 \resizebox{\textwidth}{!}{%
 \begin{tikzpicture}[
-  node distance=6mm and 9mm,
+  node distance=6mm and 10mm,
   box/.style={draw, rounded corners, align=center, inner sep=4pt, font=\footnotesize},
   arr/.style={-{Stealth}, thick}]
   \node[box] (data) {PersonaChat (original)\\ both profiles kept\\ $+$ partner-perspective\\ synthesis (role swap)};
   \node[box, right=of data] (sft) {SFT (LoRA)\\ Qwen2.5-1.5B-Instruct\\ self-only vs.\ bidir};
-  \node[box, above right=4mm and 14mm of sft] (critic) {Identification critic\\ gate: held-out, copy,\\ generic, chance};
-  \node[box, below right=4mm and 14mm of sft] (pairs) {Pair builders\\ entailment (PAL) \& pseudo\\ (PPT) \& critic};
-  \node[box, right=26mm of sft] (dpo) {DPO arms (matched)\\ $\beta$-matched, same data,\\ same seed};
+  \node[box, above=7mm of sft] (critic) {Identification critic\\ gate: held-out, copy,\\ generic, chance};
+  \node[box, below=7mm of sft] (pairs) {Pair builders\\ entailment (PAL) \& pseudo\\ (PPT) \& critic};
+  \node[box, right=12mm of sft] (dpo) {DPO arms (matched)\\ $\beta$-matched, same data,\\ same seed};
   \node[box, right=of dpo] (dump) {Generation dump\\ (fixed contract)};
   \node[box, right=of dump] (eval) {Independent harness\\ identifiability, copy, halluc.,\\ contradiction, partner, drift};
-  \draw[arr] (data) -- (sft);
-  \draw[arr] (sft) -- (critic);
-  \draw[arr] (sft) -- (pairs);
-  \draw[arr] (critic) |- (pairs);
-  \draw[arr] (pairs) -- (dpo);
-  \draw[arr] (sft) |- (dpo);
-  \draw[arr] (dpo) -- (dump);
-  \draw[arr] (dump) -- (eval);
+  \draw[arr] (data.east) -- (sft.west);
+  \draw[arr] (sft.east) -- (dpo.west);
+  \draw[arr] (dpo.east) -- (dump.west);
+  \draw[arr] (dump.east) -- (eval.west);
+  \draw[arr] (sft.north) -- (critic.south);
+  \draw[arr] (sft.south) -- (pairs.north);
+  \draw[arr] (critic.east) -| (dpo.north);
+  \draw[arr] (pairs.east) -| (dpo.south);
 \end{tikzpicture}}
 \caption{DUET pipeline. Training and grading are decoupled by construction:
 every condition dumps generations in one contract format and is graded by a
