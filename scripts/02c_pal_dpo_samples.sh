@@ -5,6 +5,10 @@
 # Input:  SFT run dir (SFT_RUN=... or newest outputs/pal_runs/pal-sft-gpt2-origin-seed42_*)
 # Output: outputs/pal_runs/pal-gpt2-dpo-samples.json
 #         ({prompt, golden_response, generated_response} joined by prompt string later)
+# OUR entailment arm: after this stage, convert to the §5 pair contract with
+#   .venv/bin/python -m duet.baselines.pal.to_pairs   # validates golden==target,
+#                                                      # re-renders prompt in our
+#                                                      # format -> data/dpo/dpo_entailment.jsonl
 #
 # Deviation: their gpt2.sh omits data_split (decode.py then defaults to "test"),
 # but the DPO stage trains on the VALID split and joins rejects by prompt string

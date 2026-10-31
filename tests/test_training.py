@@ -2,7 +2,11 @@
 
 import json
 
+import pytest
+
 from duet.baselines.pal.to_contract import convert_dir
+from duet.baselines.pal.to_pairs import build_pairs as pal_build_pairs
+from duet.baselines.pal.to_pairs import join_samples as pal_join_samples
 from duet.training.common import (apply_profile_scope, config_args,
                                   read_jsonl, to_ns, write_jsonl)
 from duet.training.prompting import format_prompt, format_sft_text
@@ -94,3 +98,55 @@ def test_selfonly_vs_bidir_differ_only_by_partner_section():
     assert "PARTNER (them):\n- i run" in both
     assert "PARTNER" not in self_only
     assert both.replace("\n\nPARTNER (them):\n- i run", "") == self_only
+
+
+# ---------------- PAL samples -> entailment pairs (stage 02c -> 03) ---------
+
+def _pal_samples_and_records():
+    records = [
+        {"id": "v0", "history": ["hi"], "profile_self": ["i hike"],
+         "profile_partner": ["i run"], "target": "gold a"},
+        {"id": "v1", "history": ["yo"], "profile_self": ["i code"],
+         "profile_partner": [], "target": "gold b"},
+    ]
+    samples = [
+        {"prompt": "PAL-FORMAT PROMPT (ignored)", "golden_response": "gold a",
+         "generated_response": "neg a"},
+        {"prompt": "PAL-FORMAT PROMPT (ignored)", "golden_response": "gold b",
+         "generated_response": "  "},
+    ]
+    return samples, records
+
+
+def test_to_pairs_renders_our_format_and_drops_empty():
+    samples, records = _pal_samples_and_records()
+    rows, dropped = pal_build_pairs(pal_join_samples(samples, records),
+                                    both=True)
+    assert dropped == 1 and len(rows) == 1
+    row = rows[0]
+    for key in ("prompt", "chosen", "rejected", "signal", "dialog_id"):
+        assert key in row, f"missing pair contract key: {key}"
+    assert row["chosen"] == "gold a"
+    assert row["rejected"] == "neg a"              # stripped
+    assert "PERSONA (you):" in row["prompt"]       # OUR rendering, not PAL's
+    assert "PAL-FORMAT" not in row["prompt"]
+    assert row["signal"] == "entailment"
+    assert row["dialog_id"] == "v0"
+
+
+def test_to_pairs_aborts_on_misalignment():
+    samples, records = _pal_samples_and_records()
+    samples[0]["golden_response"] = "SOMETHING ELSE"
+    with pytest.raises(SystemExit):
+        pal_join_samples(samples, records)
+    with pytest.raises(SystemExit):                # length mismatch too
+        pal_join_samples(samples[:1], records)
+
+
+def test_to_pairs_scope():
+    samples, records = _pal_samples_and_records()
+    samples[1]["generated_response"] = "neg b"
+    both_rows, _ = pal_build_pairs(pal_join_samples(samples, records), both=True)
+    self_rows, _ = pal_build_pairs(pal_join_samples(samples, records), both=False)
+    assert "PARTNER" in both_rows[0]["prompt"]
+    assert all("PARTNER" not in r["prompt"] for r in self_rows)

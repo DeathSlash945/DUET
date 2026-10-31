@@ -13,7 +13,9 @@ signal:
   nli_checkpoints:
     - null                                     # TODO: checkpoint 1 (seed 42)
     - null                                     # TODO: checkpoint 2 (seed 43) — selection/scoring separation
-  pair_source: pal                             # "pal" = select-then-generate, "ppt" = persona-swapped negatives
+  pair_source: pal                             # "pal" = select-then-generate (scripts/02c), then
+                                               # python -m duet.baselines.pal.to_pairs -> data/dpo/dpo_entailment.jsonl
+                                               # "ppt" = persona-swapped negatives (scripts/02f)
 
 data:
   train_path: data/processed/train.jsonl
