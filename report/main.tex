@@ -487,22 +487,22 @@ suite; self-consistency ledger.
 \bibliography{ref}
 
 {\appendix
+\small
 \section{AI Prompts and Platforms}
 \label{app:prompts}
 All repository engineering (data contracts, training wrappers, critic, PPT
 reimplementation, baselines, tests, and this report's source) was produced with
 an agentic coding assistant (OpenCode CLI agent, MiMo-V2.6-Flash model) working
-inside the project repository; paper discovery used general web search
-(DuckDuckGo) and ACL Anthology downloads; PDF text extraction used
-\texttt{pdftotext}. The substantive user$\rightarrow$LLM instructions, in
-condensed verbatim form, were:
-
+inside the repository; paper discovery used web search (DuckDuckGo) and ACL
+Anthology downloads; PDF text extraction used \texttt{pdftotext}. The
+substantive user$\rightarrow$LLM instructions, condensed verbatim:
 \begin{enumerate}
-\item Project brief: rebuild the DUET repository from the approved project plan
-(SOP base: PAL); implement Component A (adversarial persona critic), Component
-C (bidirectional persona), the stretch, and Phase-0 shared infrastructure;
-assign data$+$Component~B to Kanishk and all evaluation to Aparajith; use
-Qwen2.5-1.5B-Instruct on a local RTX~4060~8\,GB.
+\setlength{\itemsep}{0pt}\setlength{\parsep}{0pt}\setlength{\topsep}{2pt}
+\item Project brief: rebuild the DUET repository per the approved project plan
+(SOP base: PAL); implement Components A (adversarial persona critic) and C
+(bidirectional persona), the stretch, and Phase-0 infrastructure; assign
+data$+$B to Kanishk and all evaluation to Aparajith; Qwen2.5-1.5B-Instruct on
+a local RTX~4060~8\,GB.
 \item ``Tell me the current remaining time on the PAL SFT and keep checking on
 it on my each prompt. Also yes continue making Component C, and immediately do
 the PPT paper after completing it.''
@@ -511,19 +511,17 @@ start again as I need my GPU in some other task.''
 \item ``Okay continue with the process and also progress with making components
 and stuff. I'll give you the exact format for report and PPT soon when we
 complete.''
-\item Report brief: ``These are sections which may be included in the project
-report \dots 1.\,Title 2.\,Abstract \dots 13.\,Appendix (AI Prompt Given to
-LLM)''; reference material placed in \texttt{submitRef/}; instruction to refer
-to the baseline papers.
-\item Deadline correction and sprint call: ``Yup its today night only my bad,
-we so cooked gng, lets go fast then'' --- under this, the GPU was pivoted from
-the multi-day PAL reproduction to the same-night component experiments
-(critic gate + matched SFT conditions), with the AI proposing and the user
-selecting the pivot after an explicit time-budget comparison.
+\item Report brief: ``\dots 1.\,Title 2.\,Abstract \dots 13.\,Appendix (AI
+Prompt Given to LLM)''; reference material in \texttt{submitRef/}; refer to the
+baseline paper.
+\item Deadline correction and sprint call: ``Yup its today night only my bad, we
+so cooked gng, lets go fast then'' --- the GPU was pivoted from the multi-day
+PAL reproduction to the same-night component experiments (critic gate $+$
+matched SFT conditions), the AI proposing and the user selecting the pivot.
 \end{enumerate}
+}
 
 % TODO: append any prompts used directly in other platforms (ChatGPT/Claude/
 % Gemini) for ideation, the SOP, or figures, per the course template note.
-}
 
 \end{document}
