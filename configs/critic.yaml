@@ -10,7 +10,7 @@
 run_name: critic
 # Encoder backbone. deberta-v3-base: strong NLI-style discrimination (~270M).
 # For quick iteration / low VRAM: distilbert-base-uncased.
-base_model: microsoft/deberta-v3-base
+base_model: FacebookAI/roberta-base   # deberta-v3 OOMs here: disentangled attn bias = O(batch*heads*seq^2*layers) ~6GB at 5-way x bs16; roberta fits bs16, ~2x faster. sentencepiece also required for deberta spm in transformers 5.20
 checkpoint_dir: checkpoints/critic
 
 data:
@@ -26,7 +26,7 @@ candidates:
 train:
   epochs: 2
   batch_size: 16
-  eval_batch_size: 32
+  eval_batch_size: 8             # smoke hit a 64MB frag-OOM at 16; 8 = headroom
   lr: 2.0e-5
   weight_decay: 0.01
   warmup_ratio: 0.06

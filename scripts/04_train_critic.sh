@@ -14,6 +14,7 @@
 #   SMOKE=1 scripts/04_train_critic.sh         # 256 records, 1 epoch — pipeline check
 #   DEVICE=cpu scripts/04_train_critic.sh      # no-GPU debugging
 set -euo pipefail
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True   # torch>=2.1: kills the frag-OOM seen in smoke
 cd "$(dirname "$0")/.."
 REPO="$PWD"
 PY="$REPO/.venv/bin/python"
