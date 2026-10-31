@@ -295,6 +295,48 @@ the GPU for the component experiments reported above.}
 \label{fig:loss}
 \end{figure}
 
+\textbf{Component A isolation gate (pending run).} Table~\ref{tab:gate} is
+pre-registered: the critic must clear all three thresholds before any
+critic-guided DPO is permitted; failures are reported as-is.
+
+\begin{table}[!t]
+\caption{Component A isolation gate — identification critic (5-way, chance
+0.200, roberta-base). TBD: fill from \texttt{critic\_train\_full.log}.}
+\label{tab:gate}
+\centering
+\footnotesize
+\begin{tabular}{lcc}
+\hline
+Metric & Achieved & Threshold \\
+\hline
+Real-profile identification & -- & $\geq$ 0.60 \\
+Copy probe $\to$ no-match slot & -- & $\geq$ 0.80 \\
+Generic reply $\to$ no-match slot & -- & $\geq$ 0.80 \\
+\hline
+\end{tabular}
+\end{table}
+
+\textbf{Sprint SFT conditions (pending runs).} Matched self-only vs.\
+bidirectional SFT on a capped 15k-record budget (3 epochs), scored by the
+preliminary contract-only metrics of \S\ref{sec:setup}:
+Table~\ref{tab:sprint}.
+
+\begin{table}[!t]
+\caption{Sprint SFT conditions (15k records $\times$ 3 epochs, seed 42).
+TBD: fill from \texttt{eval/prelim.py} on both generation dumps.}
+\label{tab:sprint}
+\centering
+\footnotesize
+\begin{tabular}{lcccccc}
+\hline
+Condition & n & copy@1 & copy@4 & self & partner & len \\
+\hline
+SFT self-only & -- & -- & -- & -- & -- & -- \\
+SFT bidirectional & -- & -- & -- & -- & -- & -- \\
+\hline
+\end{tabular}
+\end{table}
+
 \textbf{Main comparison (pending runs).} Table~\ref{tab:main} is the
 pre-registered comparison: all rows share policy, data, budget, and seed.
 
@@ -424,6 +466,11 @@ complete.''
 report \dots 1.\,Title 2.\,Abstract \dots 13.\,Appendix (AI Prompt Given to
 LLM)''; reference material placed in \texttt{submitRef/}; instruction to refer
 to the baseline papers.
+\item Deadline correction and sprint call: ``Yup its today night only my bad,
+we so cooked gng, lets go fast then'' --- under this, the GPU was pivoted from
+the multi-day PAL reproduction to the same-night component experiments
+(critic gate + matched SFT conditions), with the AI proposing and the user
+selecting the pivot after an explicit time-budget comparison.
 \end{enumerate}
 
 % TODO: append any prompts used directly in other platforms (ChatGPT/Claude/
