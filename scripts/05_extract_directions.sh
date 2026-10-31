@@ -4,5 +4,11 @@
 # Owner: Kanishk (Phase 2). GATE: sweeps only after extraction validates.
 set -euo pipefail
 cd "$(dirname "$0")/.."
-echo "05_extract_directions: not yet implemented — Phase 2, owner Kanishk" >&2
-exit 1
+
+PY=".venv/Scripts/python.exe"
+[ -x "$PY" ] || PY=".venv/bin/python"
+[ -x "$PY" ] || { echo "05_extract_directions: Python interpreter not found in .venv" >&2; exit 1; }
+
+# Forward arguments verbatim.  Use --smoke for the CPU-only, no-download
+# plumbing check; normal extraction may load a model and is approval-gated.
+PYTHONPATH="src" "$PY" -m duet.steering.extract "$@"

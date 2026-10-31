@@ -2,7 +2,9 @@
 # Deliberately range-pinned: exact pins belong in reports/ once a run is frozen.
 
 # --- Core training stack (SFT + preference optimization via TRL/PEFT) ---
-torch>=2.3
+# PyTorch is deliberately NOT listed here. Install the platform-appropriate
+# CUDA wheel first (see PyTorch's selector), then install this file. An
+# unqualified `torch` dependency can replace a CUDA wheel with a CPU wheel.
 transformers>=4.46
 datasets>=3.0
 peft>=0.13
