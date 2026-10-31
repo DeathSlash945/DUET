@@ -27,3 +27,5 @@ pyyaml
 
 # --- Dev ---
 pytest
+tiktoken>=0.7      # deberta-v3 spm path under transformers 5.20 (robustness if encoder swapped back)
+sentencepiece>=0.2  # same

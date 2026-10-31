@@ -280,7 +280,7 @@ Attempt & Examples & Train loss & Outcome \\
 \hline
 1 & 99,968 & $2.50\!\to\!1.70$ & eval-pass OOM (patched) \\
 2 & 29,056 & $2.51\!\to\!1.77$ & paused (GPU released) \\
-3 & running & --- & in progress \\
+3 & 72,832 & $3.85\!\to\!2.06$ & paused (deadline sprint) \\
 \hline
 \end{tabular}
 \end{table}
@@ -288,9 +288,10 @@ Attempt & Examples & Train loss & Outcome \\
 \begin{figure}[!t]
 \centering
 \includegraphics[width=\columnwidth]{figures/pal_sft_loss.png}
-\caption{PAL reproduction SFT loss (attempts 1--3). Attempt 1 ended in the
-evaluation-pass OOM described in \S\ref{sec:setup}; attempts 2--3 share the
-patched configuration.}
+\caption{PAL reproduction SFT loss (attempts 2--3; attempt 1 reached 99,968
+examples before the evaluation-pass OOM described in \S\ref{sec:setup}, its
+stats in Table~\ref{tab:interim}). All attempts are paused mid-run to reserve
+the GPU for the component experiments reported above.}
 \label{fig:loss}
 \end{figure}
 
