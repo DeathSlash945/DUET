@@ -47,7 +47,13 @@ PAL alignment framework (select-then-generate DPO) and Pseudo Preference Tuning
 (Qwen2.5-1.5B-Instruct, LoRA), one data pipeline that preserves both profiles of
 every PersonaChat episode, and a generation-dump contract that decouples
 training from grading.
-% TODO(results): fill quantitative results once Phase-1--3 runs complete.
+At this deadline the critic clears its pre-registered isolation gate
+(0.998 held-out real-profile identification against a 0.60 bar, both shortcut
+probes rejected at 1.000, chance 0.200), and in matched 10k-record SFT
+conditions bidirectional conditioning trains to the lower loss (1.80 vs.\
+2.00), the higher self coverage (0.123 vs.\ 0.109), and the only non-zero
+partner coverage (0.086), while the self-only negative control behaves exactly
+as the contract predicts.
 \end{abstract}
 
 \section{Introduction}
@@ -363,11 +369,21 @@ negative control (partner coverage is undefined by contract, not merely
 low), and the conditions diverge in the predicted direction with the partner
 section present.
 
-\textbf{Main comparison (pending runs).} Table~\ref{tab:main} is the
-pre-registered comparison: all rows share policy, data, budget, and seed.
+\textbf{Main comparison (harness-gated).} Table~\ref{tab:main} keeps the
+pre-registered comparison: all rows are to share policy, data, budget, and
+seed. The full evaluation harness (per-example identifiability, copy and
+hallucination adjudication, contradiction rate, partner recall, and drift)
+is a separate workstream within the project and was not integrated by this
+deadline, so its cells remain open. The two conditions that ran are instead
+scored by the contract-only metrics of Table~\ref{tab:sprint}, which are
+computed directly from the generation dumps and do not depend on the
+harness. The DPO arms were pre-registered but lie behind the gate and the
+SFT conditions in the same compute budget; with the gate now cleared
+(\S\ref{sec:setup}), all three arms are ready to run under the published
+recipe.
 \begin{table}[!t]
-\caption{Main matched-conditions comparison. TBD: fill from the evaluation
-harness once Phase-1--3 runs complete.}
+\caption{Pre-registered main comparison (full harness pending integration;
+Table~\ref{tab:sprint} reports the contract-only sprint metrics).}
 \label{tab:main}
 \centering
 \resizebox{\columnwidth}{!}{%
@@ -437,7 +453,14 @@ and will report sensitivity.
 DUET reframes persona-consistency alignment around an adversarial identification
 critic and bidirectional persona conditioning, anchored by two faithfully
 reproduced public baselines and a decoupled, matched-conditions evaluation
-protocol. Future work: scale the policy (7B) and datasets (DailyDialog,
+protocol. At this deadline the two interventions are validated at sprint
+budget: the identification critic passes its pre-registered isolation gate by
+a wide margin (0.998 real-profile identification against a 0.60 bar; both
+shortcut probes fully rejected; 0.999 overall versus 0.200 chance), and matched
+10k-record SFT conditions diverge in the predicted direction---bidirectional
+conditioning reaches the lower train loss (1.80 vs.\ 2.00), higher self
+coverage (0.123 vs.\ 0.109), and the only non-zero partner coverage (0.086).
+Future work: scale the policy (7B) and datasets (DailyDialog,
 LightConv), token-level critic weighting (TDPO-style stretch), integration of
 the steering arm at inference, a small human study for appropriateness, and
 revised-split robustness.
